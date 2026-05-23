@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     s3_secret_key: str
     s3_bucket: str
     secret_key: str
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
     env: str = "development"
 
     class Config:
