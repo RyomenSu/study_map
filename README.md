@@ -29,8 +29,8 @@ docker compose exec analytics python generate_demo_data_studyportal.py
 
 | Role | Email | Password |
 |---|---|---|
-| Teacher | `kaxramon@gmail.com` | `demo1234` |
-| Student | `arman@gmail.com` | `demo1234` |
+| Teacher | `kaxramon@gmail.com` | `password123` |
+| Student | `arman@gmail.com` | `password123` |
 | Admin | `admin2@gmail.com` | `admin1234` |
 
 ---
