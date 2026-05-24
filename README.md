@@ -1,0 +1,118 @@
+# Study Map
+
+AI-powered educational platform with automated homework grading and national analytics dashboard.
+
+Built for hackathon demo — runs fully locally with one Docker command.
+
+---
+
+## Quick Start
+
+```bash
+# 1. Copy env and fill in API keys
+cp .env.example .env
+
+# 2. Start all services
+docker compose up -d --build
+
+# 3. Seed demo data
+docker compose exec analytics python generate_demo_data_studyportal.py
+```
+
+| Service | URL |
+|---|---|
+| Student/Teacher Portal | http://localhost:3000 |
+| AI Analytics Dashboard | http://localhost:3001 |
+| Backend API | http://localhost:8000 |
+
+---
+
+## Demo Credentials
+
+| Role | Email | Password |
+|---|---|---|
+| Teacher | `kaxramon@gmail.com` | `demo1234` |
+| Student | `arman@gmail.com` | `demo1234` |
+| Admin | `admin2@gmail.com` | `admin1234` |
+
+---
+
+## Portal Features (localhost:3000)
+
+- **Student** — view courses, submit PDF homework, see AI-generated score and feedback
+- **Teacher** — manage assignments, view all student grades with feedback
+- **Admin** — access to Analytics dashboard via navbar
+
+### Homework Pipeline
+
+```
+Student uploads PDF
+      ↓
+OCR Service (EasyOCR + Qwen 2.5 cleanup)
+      ↓
+Kafka: homework.extracted
+      ↓
+Grading Service (Gemini 2.0 Flash → fallback: Mistral 7B)
+      ↓
+Kafka: homework.graded
+      ↓
+Score + Feedback saved → visible on frontend
+```
+
+---
+
+## AI Analytics Dashboard (localhost:3001)
+
+The analytics service reads live data from the main database and provides three views:
+
+### National View
+- Interactive map of Uzbekistan with all 14 regions
+- Each region shows: average score, trend (↑↓), at-risk student count
+- Color coding: green ≥70, yellow 50–70, red <50
+- AI-generated recommendations per region (powered by Groq LLaMA 3.3)
+
+### School View
+- Per-subject performance breakdown
+- Progress bars for each subject
+- School-level AI recommendations
+
+### Student View
+- Score history chart across subjects
+- Exam pass probability prediction (XGBoost ML model)
+- Weekly study roadmap based on weak topics
+
+### How Predictions Work
+Features fed into XGBoost classifier:
+- Average score (last 5 submissions)
+- Score trend
+- Weak topic frequency
+- Submission rate
+
+---
+
+## Architecture
+
+```
+frontend        :3000  React + Vite
+backend         :8000  FastAPI + PostgreSQL + Kafka
+ocr-service     :8002  EasyOCR + Qwen 2.5 (Ollama)
+grading-service :8001  Gemini 2.0 Flash / Mistral 7B fallback
+analytics       :8003  FastAPI + XGBoost + Groq
+analytics-frontend :3001  React + Leaflet map
+kafka                  Apache Kafka (event bus)
+postgres               PostgreSQL 16
+rustfs          :9000  S3-compatible file storage
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` and fill in:
+
+```
+GEMINI_API_KEY=...       # Google AI Studio (free tier)
+GROQ_API_KEY=...         # Groq Cloud (free tier)
+```
+
+Local Ollama fallback works without any API keys if `ollama serve` is running.
