@@ -152,6 +152,9 @@ class SubmissionOut(BaseModel):
 
 class SubmissionWithDownload(SubmissionOut):
     download_url: Optional[str] = None
+    score: Optional[float] = None
+    max_score: Optional[float] = None
+    feedback: Optional[str] = None
 
 
 # ── Grade ─────────────────────────────────────────────────────────────────────

@@ -57,6 +57,22 @@ async def add_student_to_group(
         raise HTTPException(status_code=400, detail="User is not a student")
 
     student.group_id = group_id
+
+    # Auto-enroll student to courses already linked with this group.
+    course_groups_result = await db.execute(
+        select(CourseGroup).where(CourseGroup.group_id == group_id)
+    )
+    course_groups = course_groups_result.scalars().all()
+    for cg in course_groups:
+        already = await db.execute(
+            select(Enrollment).where(
+                Enrollment.course_id == cg.course_id,
+                Enrollment.student_id == student.id,
+            )
+        )
+        if not already.scalar_one_or_none():
+            db.add(Enrollment(course_id=cg.course_id, student_id=student.id))
+
     await db.commit()
     await db.refresh(student)
     return student

@@ -24,7 +24,7 @@ async def _run_consumer_once():
         bootstrap_servers=KAFKA_BOOTSTRAP,
         group_id="grading-service-group",
         value_deserializer=lambda v: json.loads(v.decode("utf-8")),
-        auto_offset_reset="earliest",
+        auto_offset_reset="latest",
     )
     producer = AIOKafkaProducer(bootstrap_servers=KAFKA_BOOTSTRAP)
 
@@ -125,10 +125,9 @@ app.add_middleware(
 @app.post("/grade", response_model=GradingResult)
 async def grade(request: Request):
     raw = await request.body()
-    # Чистим невалидные control characters перед парсингом
-    cleaned = raw.decode("utf-8").replace("\r\n", "\\n").replace("\r", "\\n").replace("\n", "\\n")
     try:
-        body_dict = json.loads(cleaned)
+        # Parse JSON body as-is; replacing newlines here breaks valid JSON objects.
+        body_dict = json.loads(raw.decode("utf-8"))
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=422, detail=f"Невалидный JSON: {e}")
 

@@ -1,11 +1,73 @@
 import json
 import os
+import urllib.request
+import urllib.error
 
 import google.generativeai as genai
 from models import GradingResult, ProblemResult, UnderstandingLevel, ErrorType
 
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
-MODEL = "gemini-1.5-flash"
+
+
+def _max_input_chars() -> int:
+    raw = os.getenv("GRADING_MAX_INPUT_CHARS", "4000").strip()
+    try:
+        value = int(raw)
+        return value if value > 0 else 4000
+    except ValueError:
+        return 4000
+
+
+def _model_candidates() -> list[str]:
+    configured = os.getenv("GEMINI_MODEL", "").strip()
+    if configured:
+        return [configured]
+    # Fallback order for compatibility across different Gemini API accounts.
+    return [
+        "gemini-2.0-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash",
+    ]
+
+
+def _is_ollama_fallback_enabled() -> bool:
+    return os.getenv("GRADING_OLLAMA_FALLBACK", "true").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _ollama_url() -> str:
+    return os.getenv("OLLAMA_URL", "http://host.docker.internal:11434/api/generate")
+
+
+def _ollama_model() -> str:
+    return os.getenv("GRADING_OLLAMA_MODEL", "mistral:7b")
+
+
+def _extract_json_text(raw: str) -> str:
+    cleaned = raw.replace("```json", "").replace("```", "").strip()
+    start = cleaned.find("{")
+    end = cleaned.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        return cleaned[start:end + 1]
+    return cleaned
+
+
+def _grade_with_ollama(prompt: str) -> str:
+    payload = {
+        "model": _ollama_model(),
+        "prompt": prompt,
+        "stream": False,
+        "options": {"temperature": 0.1}
+    }
+    req = urllib.request.Request(
+        _ollama_url(),
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST"
+    )
+    with urllib.request.urlopen(req, timeout=45) as resp:
+        body = resp.read().decode("utf-8")
+        parsed = json.loads(body)
+        return str(parsed.get("response", "")).strip()
 
 SYSTEM_PROMPT = """Ты — опытный учитель и образовательный аналитик.
 Тебе дают домашнюю работу ученика по любому школьному предмету.
@@ -66,12 +128,31 @@ SYSTEM_PROMPT = """Ты — опытный учитель и образоват�
 
 
 async def grade_submission(extracted_text: str, subject: str) -> GradingResult:
-    prompt = f"{SYSTEM_PROMPT}\n\nПредмет: {subject}\n\nДомашняя работа:\n{extracted_text}"
+    clipped_text = extracted_text[:_max_input_chars()]
+    prompt = f"{SYSTEM_PROMPT}\n\nПредмет: {subject}\n\nДомашняя работа:\n{clipped_text}"
 
-    model = genai.GenerativeModel(MODEL)
-    response = await model.generate_content_async(prompt)
-    raw = response.text.strip()
-    raw = raw.replace("```json", "").replace("```", "").strip()
+    last_error = None
+    raw = ""
+    for model_name in _model_candidates():
+        try:
+            print(f"[GRADER] Trying Gemini model: {model_name}")
+            model = genai.GenerativeModel(model_name)
+            response = await model.generate_content_async(prompt)
+            raw = response.text.strip()
+            print(f"[GRADER] Gemini model succeeded: {model_name}")
+            break
+        except Exception as e:
+            last_error = e
+            print(f"[GRADER] Gemini model failed: {model_name} -> {e}")
+
+    if not raw:
+        if _is_ollama_fallback_enabled():
+            print(f"[GRADER] Gemini unavailable. Falling back to Ollama model: {_ollama_model()}")
+            raw = _grade_with_ollama(prompt)
+        if not raw:
+            raise RuntimeError(f"No working grading model found. Last error: {last_error}")
+
+    raw = _extract_json_text(raw)
 
     parsed = json.loads(raw)
 

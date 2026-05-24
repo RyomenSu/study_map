@@ -194,8 +194,8 @@ Return JSON array of strings only, no explanation."""
     resp = await groq_client.chat.completions.create(
         model=GROQ_MODEL,
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.7,
-        max_tokens=600,
+        temperature=0.3,
+        max_tokens=220,
     )
     text = resp.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
     try:

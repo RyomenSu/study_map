@@ -55,6 +55,9 @@ export interface Submission {
   status: SubmissionStatus;
   submitted_at: string;
   download_url?: string;
+  score?: number | null;
+  max_score?: number | null;
+  feedback?: string | null;
 }
 
 export interface Grade {

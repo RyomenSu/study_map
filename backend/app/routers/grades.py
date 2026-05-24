@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.deps import CurrentUser, TeacherOrAdmin
-from app.models import Grade, Submission, SubmissionStatus, UserRole
+from app.models import Grade, Submission, SubmissionStatus, User, UserRole
 from app.schemas import GradeCreate, GradeOut
 
 router = APIRouter(tags=["grades"])
@@ -90,10 +90,13 @@ async def course_grades(
     for sub in submissions:
         grade_result = await db.execute(select(Grade).where(Grade.submission_id == sub.id))
         grade = grade_result.scalar_one_or_none()
+        student_result = await db.execute(select(User).where(User.id == sub.student_id))
+        student = student_result.scalar_one_or_none()
         rows.append({
             "submission_id": str(sub.id),
             "assignment_id": str(sub.assignment_id),
             "student_id": str(sub.student_id),
+            "student_name": student.full_name if student else None,
             "status": sub.status.value,
             "score": grade.score if grade else None,
             "max_score": grade.max_score if grade else None,

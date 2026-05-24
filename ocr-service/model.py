@@ -1,5 +1,8 @@
 import os
 import re
+import json
+import urllib.request
+import urllib.error
 import cv2
 import easyocr
 import numpy as np
@@ -19,6 +22,18 @@ def _get_ocr_languages() -> list[str]:
 
 def _is_english_postprocess_enabled() -> bool:
     return os.getenv("OCR_POSTPROCESS_EN", "true").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _is_demo_llm_cleanup_enabled() -> bool:
+    return os.getenv("OCR_DEMO_LLM_CLEANUP", "false").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _ollama_url() -> str:
+    return os.getenv("OLLAMA_URL", "http://host.docker.internal:11434/api/generate")
+
+
+def _ollama_model() -> str:
+    return os.getenv("OLLAMA_MODEL", "qwen2.5:7b-instruct")
 
 
 def get_model():
@@ -122,15 +137,56 @@ def _postprocess_english_text(text: str) -> str:
     return corrected.strip()
 
 
-def extract_text_from_image(image: Image.Image) -> str:
-    """
-    Прогоняет одно изображение через EasyOCR.
-    """
-    reader = get_model()
-    image_rgb = image.convert("RGB")
-    image_np = _resize_for_memory(np.array(image_rgb))
-    preprocessed_np = _preprocess_for_ocr(image_np)
+def _cleanup_with_local_llm(text: str) -> str:
+    if not _is_demo_llm_cleanup_enabled():
+        print("LLM cleanup disabled by OCR_DEMO_LLM_CLEANUP=false")
+        return text
+    if not text.strip():
+        return text
 
+    prompt = (
+        "You are cleaning noisy OCR output from handwritten English notes.\n"
+        "Task:\n"
+        "1) Return ONE cleaned English sentence/paragraph.\n"
+        "2) Fix obvious OCR mistakes and punctuation.\n"
+        "3) Keep original meaning as much as possible.\n"
+        "4) Do not add explanations, only the cleaned text.\n\n"
+        f"OCR text:\n{text}"
+    )
+
+    payload = {
+        "model": _ollama_model(),
+        "prompt": prompt,
+        "stream": False,
+        "options": {
+            "temperature": 0.1
+        }
+    }
+
+    req = urllib.request.Request(
+        _ollama_url(),
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST"
+    )
+    try:
+        print(f"Sending OCR text to LLM cleanup: model={_ollama_model()}")
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            body = resp.read().decode("utf-8")
+            parsed = json.loads(body)
+            cleaned = str(parsed.get("response", "")).strip()
+            if cleaned:
+                print("LLM cleanup succeeded and returned text.")
+            else:
+                print("LLM cleanup returned empty response, using OCR text.")
+            return cleaned or text
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError):
+        print("LLM cleanup unavailable/failed, fallback to OCR text.")
+        return text
+
+
+def _extract_with_easyocr(preprocessed_np: np.ndarray) -> str:
+    reader = get_model()
     lines = reader.readtext(
         preprocessed_np,
         detail=0,
@@ -138,8 +194,19 @@ def extract_text_from_image(image: Image.Image) -> str:
         decoder="greedy",
         batch_size=1
     )
-    raw_text = "\n".join(line.strip() for line in lines if line and line.strip()).strip()
-    return _postprocess_english_text(raw_text)
+    return "\n".join(line.strip() for line in lines if line and line.strip()).strip()
+
+
+def extract_text_from_image(image: Image.Image) -> str:
+    """
+    Прогоняет одно изображение через EasyOCR.
+    """
+    image_rgb = image.convert("RGB")
+    image_np = _resize_for_memory(np.array(image_rgb))
+    preprocessed_np = _preprocess_for_ocr(image_np)
+    raw_text = _extract_with_easyocr(preprocessed_np)
+    corrected_text = _postprocess_english_text(raw_text)
+    return _cleanup_with_local_llm(corrected_text)
 
 
 def extract_text_from_images(images: list[Image.Image]) -> str:

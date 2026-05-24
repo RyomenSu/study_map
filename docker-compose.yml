@@ -117,6 +117,12 @@ services:
       AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-studyportal}
       AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-studyportal_pass}
       AWS_REGION: us-east-1
+      OCR_ENGINE: ${OCR_ENGINE:-easyocr}
+      OCR_LANGS: ${OCR_LANGS:-en}
+      OCR_POSTPROCESS_EN: ${OCR_POSTPROCESS_EN:-true}
+      OCR_DEMO_LLM_CLEANUP: ${OCR_DEMO_LLM_CLEANUP:-true}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434/api/generate}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b-instruct}
     ports:
       - "8002:8002"
     volumes:
@@ -140,7 +146,11 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_INPUT_TOPIC: homework.extracted
       KAFKA_OUTPUT_TOPIC: homework.graded
-      GEMINI_API_KEY: <GEMINI_API_KEY>
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-<PUT_GEMINI_API_KEY_HERE>}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      GRADING_OLLAMA_FALLBACK: ${GRADING_OLLAMA_FALLBACK:-true}
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434/api/generate}
+      GRADING_OLLAMA_MODEL: ${GRADING_OLLAMA_MODEL:-mistral:7b}
     ports:
       - "8001:8000"
     volumes:
@@ -158,7 +168,7 @@ services:
       - "8003:8002"
     environment:
       DATABASE_URL: postgresql://studyportal:studyportal_pass@postgres:5432/studyportal
-      GROQ_API_KEY: <GROQ_API_KEY>
+      GROQ_API_KEY: ${GROQ_API_KEY:-<PUT_GROQ_API_KEY_HERE>}
       KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
       postgres:

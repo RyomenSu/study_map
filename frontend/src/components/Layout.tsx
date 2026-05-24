@@ -14,6 +14,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.to === "/analytics") return user?.role === "admin";
+    return true;
+  });
 
   const handleLogout = () => {
     logout();
@@ -32,7 +36,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map(({ to, icon: Icon, label }) => {
+          {visibleNavItems.map(({ to, icon: Icon, label }) => {
             const active = location.pathname === to || (to !== "/" && location.pathname.startsWith(to));
             return (
               <Link

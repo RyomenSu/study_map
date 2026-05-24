@@ -1,0 +1,69 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env.local
+
+# ── Machine learning models ───────────────────────────────────────────────────
+*.joblib
+*.pkl
+*.pt
+*.pth
+model.joblib
+
+# ── Environment / secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+dist/
+.next/
+.nuxt/
+build/
+*.local
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ── IDE / OS ──────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OCR model cache ───────────────────────────────────────────────────────────
+ocr-service/.EasyOCR/
+ocr-service/model/
+*.onnx
+
+# ── Uploads / temp files ──────────────────────────────────────────────────────
+uploads/
+tmp/
+temp/
+*.pdf
+*.tmp
+
+# ── Coverage / test artifacts ─────────────────────────────────────────────────
+.coverage
+htmlcov/
+.pytest_cache/

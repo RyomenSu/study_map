@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.deps import CurrentUser, TeacherOrAdmin
-from app.models import Assignment, Submission, SubmissionStatus, UserRole
+from app.models import Assignment, Grade, Submission, SubmissionStatus, UserRole
 from app.schemas import SubmissionOut, SubmissionWithDownload
 from app.services import storage
 from app.services.kafka import publish_submission
@@ -90,6 +90,12 @@ async def list_submissions(
     out = []
     for s in subs:
         data = SubmissionWithDownload.model_validate(s)
+        grade_result = await db.execute(select(Grade).where(Grade.submission_id == s.id))
+        grade = grade_result.scalar_one_or_none()
+        if grade:
+            data.score = grade.score
+            data.max_score = grade.max_score
+            data.feedback = grade.feedback
         if s.file_key:
             data.download_url = storage.generate_presigned_url(s.file_key)
         out.append(data)

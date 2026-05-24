@@ -37,7 +37,14 @@ function App() {
                   <Route path="/courses/:courseId" element={<CourseDetail />} />
                   <Route path="/groups" element={<GroupsPage />} />
                   <Route path="/attendance" element={<AttendancePage />} />
-                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route
+                    path="/analytics"
+                    element={
+                      <ProtectedRoute allowedRoles={["admin"]}>
+                        <AnalyticsPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="*" element={<Navigate to="/" />} />
                 </Routes>
               </Layout>

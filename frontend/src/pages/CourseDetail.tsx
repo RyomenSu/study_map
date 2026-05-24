@@ -34,7 +34,14 @@ export function CourseDetail() {
       .catch(() => toast.error("Failed to load assignments"));
 
   const fetchGrades = () =>
-    api.get(`/courses/${courseId}/grades`).then((r) => setGrades(r.data));
+    api.get(`/courses/${courseId}/grades`).then((r) => {
+      const rows = r.data || [];
+      if (!isTeacherOrAdmin && user?.id) {
+        setGrades(rows.filter((g: any) => g.student_id === user.id));
+      } else {
+        setGrades(rows);
+      }
+    });
 
   const fetchSubmissions = async (assignmentId: string) => {
     const r = await api.get(`/courses/${courseId}/assignments/${assignmentId}/submissions`);
@@ -259,13 +266,20 @@ function AssignmentCard({
               )}
               <span className="text-xs text-gray-400">{assignment.max_score} pts</span>
               {mySubmission && (
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  mySubmission.status === "graded" ? "bg-green-100 text-green-700" :
-                  mySubmission.status === "late" ? "bg-red-100 text-red-700" :
-                  "bg-blue-100 text-blue-700"
-                }`}>
-                  {mySubmission.status}
-                </span>
+                <>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                    mySubmission.status === "graded" ? "bg-green-100 text-green-700" :
+                    mySubmission.status === "late" ? "bg-red-100 text-red-700" :
+                    "bg-blue-100 text-blue-700"
+                  }`}>
+                    {mySubmission.status}
+                  </span>
+                  {mySubmission.status === "graded" && mySubmission.score != null && mySubmission.max_score != null && (
+                    <span className="text-xs font-semibold text-green-700">
+                      {mySubmission.score} / {mySubmission.max_score}
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -382,6 +396,12 @@ function SubmissionRow({
           </button>
         </div>
       )}
+      {submission.status === "graded" && submission.score != null && submission.max_score != null && (
+        <div className="mt-2 text-xs text-green-700 font-medium">
+          Score: {submission.score} / {submission.max_score}
+          {submission.feedback ? ` — ${submission.feedback}` : ""}
+        </div>
+      )}
     </div>
   );
 }
@@ -391,7 +411,9 @@ function GradeRow({ grade, isTeacher }: { grade: any; isTeacher: boolean }) {
   return (
     <tr>
       <td className="px-4 py-3 text-gray-600 font-mono text-xs">{grade.assignment_id.slice(0, 8)}</td>
-      <td className="px-4 py-3 text-gray-600 font-mono text-xs">{grade.student_id.slice(0, 8)}</td>
+      <td className="px-4 py-3 text-gray-700 text-sm">
+        {grade.student_name || grade.student_id.slice(0, 8)}
+      </td>
       <td className="px-4 py-3">
         {grade.score != null ? (
           <span className={`font-semibold ${pct! >= 70 ? "text-green-600" : pct! >= 50 ? "text-yellow-600" : "text-red-600"}`}>
