@@ -13,7 +13,7 @@ export default function App() {
       <header className="bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center gap-6">
         <div className="flex items-center gap-2">
           <span className="text-blue-400 text-xl">🎓</span>
-          <span className="font-bold text-white">EduAnalytics</span>
+          <span className="font-bold text-white">AI Learning Analytics Platform</span>
           <span className="text-gray-500 text-sm">Министерство образования Узбекистана</span>
         </div>
         <nav className="flex gap-1 ml-auto">

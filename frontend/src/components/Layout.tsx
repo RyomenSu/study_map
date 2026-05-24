@@ -31,7 +31,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="px-4 py-5 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <BookOpen className="text-brand-600 w-6 h-6" />
-            <span className="font-bold text-gray-900 text-lg">Study Portal</span>
+            <span className="font-bold text-gray-900 text-lg">Study Map</span>
           </div>
         </div>
 

@@ -24,7 +24,7 @@ model.joblib
 # ── Environment / secrets ─────────────────────────────────────────────────────
 .env
 .env.*
-!.env.example
+.env.example
 
 # ── Node / Frontend ───────────────────────────────────────────────────────────
 node_modules/

@@ -21,7 +21,7 @@ export function Register() {
       await api.post("/auth/register", form);
       await login(form.email, form.password);
       navigate("/");
-      toast.success("Welcome to Study Portal!");
+      toast.success("Welcome to Study Map!");
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Registration failed");
     } finally {
@@ -34,7 +34,7 @@ export function Register() {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
         <div className="flex items-center gap-3 mb-8">
           <BookOpen className="text-brand-600 w-8 h-8" />
-          <h1 className="text-2xl font-bold text-gray-900">Study Portal</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Study Map</h1>
         </div>
 
         <h2 className="text-xl font-semibold text-gray-800 mb-6">Create your account</h2>
