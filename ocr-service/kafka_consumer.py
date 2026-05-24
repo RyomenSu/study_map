@@ -36,11 +36,11 @@ async def process_message(msg: dict, producer: AIOKafkaProducer):
         pdf_bytes = download_pdf_from_s3(s3_path)
 
         if has_native_text(pdf_bytes):
-            print("Native text found, skipping TrOCR")
+            print("Native text found, skipping OCR model")
             extracted_text = extract_native_text(pdf_bytes)
         else:
-            print("No native text, running TrOCR")
-            images = pdf_to_images(pdf_bytes, dpi=150)
+            print("No native text, running OCR model")
+            images = pdf_to_images(pdf_bytes, dpi=200)
             extracted_text = extract_text_from_images(images)
 
         result = {

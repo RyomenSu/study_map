@@ -55,11 +55,11 @@ async def extract(file: UploadFile = File(...)):
         pdf_bytes = await file.read()
 
         if has_native_text(pdf_bytes):
-            print("Native text detected, skipping TrOCR")
+            print("Native text detected, skipping OCR model")
             extracted_text = extract_native_text(pdf_bytes)
         else:
-            print("Handwritten/scanned PDF, running TrOCR")
-            images = pdf_to_images(pdf_bytes, dpi=150)
+            print("Handwritten/scanned PDF, running OCR model")
+            images = pdf_to_images(pdf_bytes, dpi=200)
             extracted_text = await asyncio.get_event_loop().run_in_executor(
                 None,
                 extract_text_from_images,
