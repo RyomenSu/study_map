@@ -9,9 +9,7 @@ Built for hackathon demo — runs fully locally with one Docker command.
 ## Quick Start
 
 ```bash
-# 1. Copy env and fill in API keys
-cp .env.example .env
-
+# 1. Create .env and add your API keys (see Environment Variables section below)
 # 2. Start all services
 docker compose up -d --build
 
