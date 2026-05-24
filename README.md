@@ -108,11 +108,25 @@ rustfs          :9000  S3-compatible file storage
 
 ## Environment Variables
 
-Copy `.env.example` and fill in:
+Create a `.env` file in the project root:
 
-```
-GEMINI_API_KEY=...       # Google AI Studio (free tier)
-GROQ_API_KEY=...         # Groq Cloud (free tier)
+```env
+GEMINI_API_KEY=your_key_here
+GROQ_API_KEY=your_key_here
 ```
 
-Local Ollama fallback works without any API keys if `ollama serve` is running.
+Get free API keys:
+- **Gemini** → https://aistudio.google.com/apikey
+- **Groq** → https://console.groq.com/keys
+
+### No API keys? Use local Ollama instead
+
+Install Ollama → https://ollama.com and run:
+
+```bash
+ollama serve
+ollama pull mistral:7b        # for grading
+ollama pull qwen2.5:7b-instruct  # for OCR cleanup
+```
+
+The system automatically falls back to local Ollama if API quota is exceeded or keys are not set.
