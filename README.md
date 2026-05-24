@@ -43,20 +43,22 @@ docker compose exec analytics python generate_demo_data_studyportal.py
 - **Teacher** — manage assignments, view all student grades with feedback
 - **Admin** — access to Analytics dashboard via navbar
 
-### Homework Pipeline
+### Pipeline
 
-```
-Student uploads PDF
-      ↓
-OCR Service (EasyOCR + Qwen 2.5 cleanup)
-      ↓
-Kafka: homework.extracted
-      ↓
-Grading Service (Gemini 2.0 Flash → fallback: Mistral 7B)
-      ↓
-Kafka: homework.graded
-      ↓
-Score + Feedback saved → visible on frontend
+```mermaid
+flowchart LR
+    A([Дз / Тест\nPDF Upload]) --> B([OCR\nEasyOCR + Qwen 2.5])
+    B --> C([AI Grading\nGemini / Mistral])
+    C --> D([Kafka])
+    D --> E([Аналитика + ML\nXGBoost])
+    E --> F([Государственный\nDashboard])
+
+    style A fill:#86efac,stroke:#166534,color:#000
+    style F fill:#86efac,stroke:#166534,color:#000
+    style B fill:#60a5fa,stroke:#1e40af,color:#000
+    style C fill:#60a5fa,stroke:#1e40af,color:#000
+    style D fill:#60a5fa,stroke:#1e40af,color:#000
+    style E fill:#60a5fa,stroke:#1e40af,color:#000
 ```
 
 ---
